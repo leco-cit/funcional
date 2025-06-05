@@ -1,1 +1,46 @@
+// Fix for commission calculation when selling with Ton Pro MEI e PJ plan.
+// Also removes consultant name from dashboard bonus list display.
 
+function processBaixaTonNaMao(item, consultorName, clienteVal, planoSelecionado, adsChoice, dataBaixa, horarioBaixa) {
+  // Compute sale value and commission based on selected plan
+  let valorVenda = 0;
+  let comissaoFinal = 0;
+
+  if (valores[item.modelo] && valores[item.modelo][planoSelecionado]) {
+    const ref = valores[item.modelo][planoSelecionado];
+    valorVenda = parseFloat(ref.venda) || 0;
+    const consultorObj = systemConfig.consultores.find(c => c.name.trim().toLowerCase() === consultorName.trim().toLowerCase());
+    if (consultorObj) {
+      const pct = consultorObj.comissao / 100;
+      const tnmRef = parseFloat(ref.tnmComissao) || 0;
+      comissaoFinal = tnmRef * pct;
+    }
+  }
+
+  historico.push({
+    serial: item.serial,
+    data: dataBaixa,
+    horario: horarioBaixa,
+    cliente: clienteVal,
+    categoria: item.categoria,
+    cadastro: item.cadastro,
+    modelo: item.modelo,
+    plano: planoSelecionado,
+    chip: item.chipOperadora,
+    loja: item.alocacao,
+    consultor: consultorName,
+    comissao: comissaoFinal.toFixed(2),
+    valorVenda: valorVenda.toFixed(2),
+    status: 'OK',
+    origem: 'TNM',
+    ads: adsChoice,
+    notas: item.notas
+  });
+}
+
+// Function to clean bonus display list (remove hard-coded consultant name)
+function atualizarBonusConsultorDisplay(consName, acumulado, bonusDia) {
+  const container = document.getElementById('dash-consultor-bonus-list');
+  if (!container) return;
+  container.textContent = `${consName} - Acumulado/Mês: R$ ${acumulado.toFixed(2)} | Bônus do Dia: R$ ${bonusDia.toFixed(2)}`;
+}
